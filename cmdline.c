@@ -275,6 +275,9 @@ bool cmdlineParse(int argc, char* argv[], honggfuzz_t* hfuzz) {
                 .externalCommand = NULL,
                 .postExternalCommand = NULL,
                 .feedbackMutateCommand = NULL,
+#if defined(_HF_PYTHON)
+                .pythonMutator = NULL,
+#endif // defined(_HF_PYTHON)
                 .persistent = false,
                 .netDriver = false,
                 .asLimit = 0U,
@@ -442,6 +445,10 @@ bool cmdlineParse(int argc, char* argv[], honggfuzz_t* hfuzz) {
         { { "netdriver", no_argument, NULL, 0x10C }, "Use netdriver (libhfnetdriver/). In most cases it will be autodetected through a binary signature" },
         { { "only_printable", no_argument, NULL, 'o' }, "Only generate printable inputs" },
 
+#if defined(_HF_PYTHON)
+        { { "python_mutator", required_argument, NULL, 'p' }, "External python script producing fuzz data (instead of internal mutators)" },
+#endif // defined(_HF_PYTHON)
+
 #if defined(_HF_ARCH_LINUX)
         { { "linux_symbols_bl", required_argument, NULL, 0x504 }, "Symbols blacklist filter file (one entry per line)" },
         { { "linux_symbols_wl", required_argument, NULL, 0x505 }, "Symbols whitelist filter file (one entry per line)" },
@@ -477,7 +484,7 @@ bool cmdlineParse(int argc, char* argv[], honggfuzz_t* hfuzz) {
     int opt_index = 0;
     for (;;) {
         int c = getopt_long(
-            argc, argv, "-?hQvVsuPxf:dqe:W:r:c:F:t:R:n:N:l:p:g:E:w:B:zTSo", opts, &opt_index);
+            argc, argv, "-?hQvVsuPxf:dqe:W:r:c:p:F:t:R:n:N:l:p:g:E:w:B:zTSo", opts, &opt_index);
         if (c < 0) break;
 
         switch (c) {
@@ -539,6 +546,11 @@ bool cmdlineParse(int argc, char* argv[], honggfuzz_t* hfuzz) {
             case 'c':
                 hfuzz->exe.externalCommand = optarg;
                 break;
+#if defined(_HF_PYTHON)
+            case 'p':
+                hfuzz->exe.pythonMutator = optarg;
+                break;
+#endif //defined(_HF_PYTHON)
             case 'S':
                 hfuzz->sanitizer.enable = true;
                 break;

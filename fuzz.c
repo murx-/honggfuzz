@@ -55,6 +55,9 @@
 #include "sanitizers.h"
 #include "socketfuzzer.h"
 #include "subproc.h"
+#if defined(_HF_PYTHON)
+#include "pythonMutate.h"
+#endif // defined(_HF_PYTHON)
 
 static time_t termTimeStamp = 0;
 
@@ -336,6 +339,13 @@ static bool fuzz_fetchInput(run_t* run) {
                 LOG_E("input_prepareFileDynamically() failed");
                 return false;
             }
+#if defined(_HF_PYTHON)
+        } else if (run->global->exe.pythonMutator) {
+            if (!pythonMutateFile(run)) {
+                LOG_E("pythonMutateFile() failed");
+                return false;
+            }
+#endif //defined(_HF_PYTHON)
         } else if (!input_prepareDynamicInput(run, true)) {
             LOG_E("input_prepareFileDynamically() failed");
             return false;
@@ -353,6 +363,13 @@ static bool fuzz_fetchInput(run_t* run) {
                 LOG_E("input_prepareFileDynamically() failed");
                 return false;
             }
+#if defined(_HF_PYTHON)
+        } else if (run->global->exe.pythonMutator) {
+            if (!pythonMutateFile(run)) {
+                LOG_E("pythonMutateFile() failed");
+                return false;
+            }
+#endif //defined(_HF_PYTHON)
         } else if (!input_prepareStaticFile(run, true /* rewind */, true)) {
             LOG_E("input_prepareFile() failed");
             return false;

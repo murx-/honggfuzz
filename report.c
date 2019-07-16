@@ -33,6 +33,7 @@
 #include "libhfcommon/common.h"
 #include "libhfcommon/log.h"
 #include "libhfcommon/util.h"
+#include "honggfuzz.h"
 
 static int reportFD = -1;
 
@@ -97,6 +98,9 @@ void report_Report(run_t* run) {
         "FUZZER ARGS:\n"
         " mutationsPerRun : %u\n"
         " externalCmd     : %s\n"
+#if defined(_HF_PYTHON)
+        " pythonMutator   : %s\n"
+#endif // defined(_HF_PYTHON)
         " fuzzStdin       : %s\n"
         " timeout         : %ld (sec)\n"
 #if defined(_HF_ARCH_LINUX) || defined(_HF_ARCH_NETBSD)
@@ -108,6 +112,9 @@ void report_Report(run_t* run) {
         " wordlistFile    : %s\n",
         localtmstr, run->global->mutate.mutationsPerRun,
         run->global->exe.externalCommand == NULL ? "NULL" : run->global->exe.externalCommand,
+#if defined(_HF_PYTHON)
+        run->global->exe.pythonMutator == NULL ? "NULL" : run->global->exe.pythonMutator,
+#endif // defined(_HF_PYTHON)
         run->global->exe.fuzzStdin ? "TRUE" : "FALSE", run->global->timing.tmOut,
 #if defined(_HF_ARCH_LINUX)
         run->global->linux.ignoreAddr,

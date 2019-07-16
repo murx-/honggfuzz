@@ -201,6 +201,13 @@ ifeq ($(DEBUG),true)
     LDFLAGS += -g -ggdb
 endif
 
+# Check if Python is usable
+ifeq "$(shell echo '\#include <Python.h>@int main() {return 0; }' | tr @ '\n' | $(CC) -x c - -o .test `pkg-config --cflags python3` `pkg-config --libs python3` 2>/dev/null && echo 1 || echo 0 )" "1"
+	CFLAGS += -D_HF_PYTHON
+	CFLAGS += `pkg-config --cflags python3`
+	LDFLAGS += `pkg-config --libs python3`
+endif
+
 # Control Android builds
 ANDROID_API           ?= android-26
 ANDROID_DEBUG_ENABLED ?= false
@@ -470,3 +477,5 @@ netbsd/unwind.o: libhfcommon/common.h libhfcommon/log.h
 posix/arch.o: arch.h honggfuzz.h libhfcommon/util.h fuzz.h
 posix/arch.o: libhfcommon/common.h libhfcommon/files.h libhfcommon/common.h
 posix/arch.o: libhfcommon/log.h subproc.h
+pythonMutate.o: pythonMutate.h honggfuzz.h libhfcommon/util.h input.h
+pythonMutate.o: libhfcommon/common.h libhfcommon/log.h

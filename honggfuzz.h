@@ -206,6 +206,9 @@ typedef struct {
         bool nullifyStdio;
         bool fuzzStdin;
         const char* externalCommand;
+#if defined(_HF_PYTHON)
+        const char* pythonMutator;
+#endif // defined(_HF_PYTHON)
         const char* postExternalCommand;
         const char* feedbackMutateCommand;
         bool netDriver;
