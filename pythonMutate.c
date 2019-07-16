@@ -59,6 +59,17 @@ static bool wait = false;
 
 bool pythonMutate_init(run_t* run) {
     wait = true;
+
+    if (run->global->exe.externalCommand) {
+        // probably never reached as externalCommand called before python
+        LOG_F("ExternalCommand and Python mode used in one command line")
+    }
+
+    //LOG_F("Using %zd threads, currently only 1 thread supported!", run->global->threads.threadsMax)
+    if (run->global->threads.threadsMax > 1) {
+        LOG_F("Using %zd threads, currently only 1 thread supported with python mutator!", run->global->threads.threadsMax)
+    }
+
     LOG_D("Initializing python with module: %s", run->global->exe.pythonMutator)
 
     char *dirc = strdup(run->global->exe.pythonMutator);
