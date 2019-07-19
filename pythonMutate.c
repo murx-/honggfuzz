@@ -3,7 +3,7 @@
  * honggfuzz - python mutator
  * -----------------------------------------
  *
- * Author: Tillmann Osswald <swiecki@google.com>
+ * Author: Tillmann Osswald
  *
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may
@@ -56,6 +56,7 @@ typedef struct {
 static pythonMutate_t pythonMutate_obj;
 static bool inited = false;
 static bool wait = false;
+//static int gil_init = 0;
 
 bool pythonMutate_init(run_t* run) {
     wait = true;
@@ -65,10 +66,6 @@ bool pythonMutate_init(run_t* run) {
         LOG_F("ExternalCommand and Python mode used in one command line")
     }
 
-    //LOG_F("Using %zd threads, currently only 1 thread supported!", run->global->threads.threadsMax)
-    if (run->global->threads.threadsMax > 1) {
-        LOG_F("Using %zd threads, currently only 1 thread supported with python mutator!", run->global->threads.threadsMax)
-    }
 
     LOG_D("Initializing python with module: %s", run->global->exe.pythonMutator)
 
@@ -112,6 +109,10 @@ bool pythonMutate_init(run_t* run) {
         inited=true;
         wait=false;
 
+        PyEval_InitThreads();
+        PyEval_SaveThread();
+
+
         return true;
     }
     fprintf(stderr, "%s ", "python ");
@@ -123,8 +124,12 @@ bool pythonMutateFile(run_t* run) {
     LOG_D("python mutator %s called", run->global->exe.pythonMutator)
     if (!inited && !wait) {
         pythonMutate_init(run);
+    } else if (wait) {
+        return true;
     }
     LOG_D("Using python mutator")
+
+    PyGILState_STATE state = PyGILState_Ensure();
 
 
     PyObject *funcFuzzArguments, *funcFuzzBuffer, *funcFuzzRetVal;
@@ -143,19 +148,19 @@ bool pythonMutateFile(run_t* run) {
 
     funcFuzzRetVal = PyObject_CallObject(pythonMutate_obj.pFuncFuzz, funcFuzzArguments);
 
-    Py_DECREF(funcFuzzBuffer);
+    //Py_DECREF(funcFuzzBuffer);
     Py_DECREF(funcFuzzArguments);
     if (!funcFuzzRetVal) {
         PyErr_Print();
         LOG_E("Mutation failed!")
         Py_DECREF(funcFuzzRetVal);
-        Py_DECREF(funcFuzzBuffer);
+        //Py_DECREF(funcFuzzBuffer);
         return false;
     }
     size_t funcFuzzRetLen = PyByteArray_Size(funcFuzzRetVal);
     if (funcFuzzRetLen > run->global->mutate.maxFileSz) {
         Py_DECREF(funcFuzzRetVal);
-        Py_DECREF(funcFuzzBuffer);
+        //Py_DECREF(funcFuzzBuffer);
         LOG_D("Output too big!")
         return true;
     }
@@ -165,14 +170,16 @@ bool pythonMutateFile(run_t* run) {
     if (PyErr_Occurred()) {
         PyErr_Print();
         Py_DECREF(funcFuzzRetVal);
-        Py_DECREF(funcFuzzBuffer);
+        //Py_DECREF(funcFuzzBuffer);
         LOG_E("Failed to convert python return value to bytes")
         return false;
     }
 
     memmove(&run->dynamicFile[0], bytes, funcFuzzRetLen);
     Py_DECREF(funcFuzzRetVal);
-    Py_DECREF(funcFuzzBuffer);
+    //Py_DECREF(funcFuzzBuffer);
+
+    PyGILState_Release(state);
 
 
     return true;
