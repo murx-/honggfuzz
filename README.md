@@ -1,3 +1,7 @@
+Python mutator and multi threading support for honggfuzz (an old version).
+
+This repository is not maintained any more. 
+
 # honggfuzz
 
 ## Description
